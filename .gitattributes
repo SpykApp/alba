@@ -1,0 +1,6 @@
+# Files marked export-ignore are left out of Composer installs (git archive / dist zips).
+/demo            export-ignore
+/laravel-demo    export-ignore
+/tests           export-ignore
+/.gitattributes  export-ignore
+/.gitignore      export-ignore
