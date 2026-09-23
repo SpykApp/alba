@@ -1035,7 +1035,20 @@ ALBA_THEME=ocean php -S localhost:8088 -t demo/public              # sample them
 ALBA_INSTALLED=status php -S localhost:8088 -t demo/public         # page | status | redirect | wizard
 ```
 
-Reset the demo to its pre-install state:
+### Laravel demo
+
+`laravel-demo/` is a complete Laravel app installed with Alba through the Laravel service provider and the `Laravel` preset (real `artisan migrate`, `db:seed`, `storage:link`, generated `APP_KEY`, licence keys, custom questions, a seeded admin account and a 404 once installed).
+
+```bash
+cd laravel-demo
+composer install   # links the local alba package
+./reset.sh         # start from a clean, uninstalled state
+php artisan serve
+```
+
+Open `http://localhost:8000/install`. Licence keys: `ALBA-PRO-0001` or `ALBA-LITE-0001`. The installer definition is `laravel-demo/alba.php`.
+
+Reset the plain PHP demo to its pre-install state:
 
 ```bash
 demo/reset.sh
@@ -1069,7 +1082,9 @@ Verified: the full flow (all steps, licence based file actions, env writing, mig
 
 Partly verified: for Symfony, CodeIgniter, Yii 2, CakePHP, WordPress, Phinx and Doctrine Migrations, the config files Alba writes (`.env.local`, `.env`, `config/db.php`, `config/app_local.php`, `wp-config.php`) were generated and inspected, and the placeholder and config tasks were exercised. The framework commands those presets run (for example `bin/console doctrine:migrations:migrate`) were not executed against real applications, and the Drupal preset was not run at all.
 
-Not yet verified: the Laravel and PSR-15 adapters have not been run against real Laravel, Symfony or Slim applications, the Envato verifier has not been called against the live API, and the automated test suite is still to be written. Treat those parts as untested until you have tried them in your own project, and please report what you find.
+The Laravel service provider (auto-discovery, route mounting outside the web middleware group) was verified in `laravel-demo`.
+
+Not yet verified: the PSR-15 adapter has not been run against Symfony, Slim or Mezzio applications, the Envato verifier has not been called against the live API, and the automated test suite is still to be written. Treat those parts as untested until you have tried them in your own project, and please report what you find.
 
 ---
 

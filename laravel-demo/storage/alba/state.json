@@ -1,0 +1,16 @@
+{
+    "done": [
+        "welcome",
+        "requirements",
+        "permissions",
+        "database"
+    ],
+    "db": {
+        "driver": "sqlite",
+        "host": "127.0.0.1",
+        "port": "3306",
+        "database": "database\/database.sqlite",
+        "username": "",
+        "password": ""
+    }
+}

@@ -37,7 +37,7 @@ final class LaravelServiceProvider extends ServiceProvider
                 (string) $request->ip(),
             ));
 
-            $response = response($out->body, $out->status, $out->headers);
+            $response = response($out->body, $out->status, $out->headers + ['Cache-Control' => 'no-store', 'X-Robots-Tag' => 'noindex, nofollow']);
             foreach ($out->cookies as $name => $value) {
                 $response->headers->setCookie(new \Symfony\Component\HttpFoundation\Cookie($name, $value, 0, '/', null, null, true, false, 'lax'));
             }
@@ -45,8 +45,8 @@ final class LaravelServiceProvider extends ServiceProvider
             return $response;
         };
 
-        Route::withoutMiddleware('*')
-            ->match(['GET', 'POST'], rtrim($alba->route, '/').'/{any?}', $handler)
-            ->where('any', '.*');
+        // Registered outside the "web" group: no session, cookie encryption or CSRF
+        // middleware, so it works before APP_KEY, .env or the database exist.
+        Route::match(['GET', 'POST'], rtrim($alba->route, '/').'/{any?}', $handler)->where('any', '.*');
     }
 }
