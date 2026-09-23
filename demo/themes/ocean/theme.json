@@ -1,0 +1,31 @@
+{
+  "name": "Ocean",
+  "tokens": {
+    "shared": {
+      "radius": "10px",
+      "font": "Georgia, 'Times New Roman', serif"
+    },
+    "light": {
+      "bg": "#f4f9fc",
+      "fg": "#0b2540",
+      "muted": "#e3eef6",
+      "muted-fg": "#4a6a85",
+      "border": "#c5d9e8",
+      "brand": "#0369a1",
+      "brand-fg": "#ffffff"
+    },
+    "dark": {
+      "bg": "#07141f",
+      "fg": "#e2f1fb",
+      "muted": "#0d2334",
+      "muted-fg": "#84a7c1",
+      "border": "#17384f",
+      "brand": "#38bdf8",
+      "brand-fg": "#04121c"
+    }
+  },
+  "logo": {
+    "light": "/install/_alba/theme/logo-light.svg",
+    "dark": "/install/_alba/theme/logo-dark.svg"
+  }
+}
