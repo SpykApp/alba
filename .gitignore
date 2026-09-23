@@ -1,0 +1,5 @@
+vendor/
+demo/storage/*
+!demo/storage/.gitkeep
+demo/app/
+demo/.env

@@ -1,0 +1,22 @@
+{
+    "name": "spykralabs/alba",
+    "description": "Alba - PHP App Installer. A themable, framework-agnostic installation wizard for any PHP application.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.1",
+        "ext-json": "*",
+        "ext-pdo": "*"
+    },
+    "suggest": {
+        "psr/http-server-middleware": "To use the PSR-15 adapter (Symfony, Slim, Mezzio...)",
+        "ext-curl": "Required by the Envato license verifier"
+    },
+    "autoload": {
+        "psr-4": { "SpykraLabs\\Alba\\": "src/" }
+    },
+    "extra": {
+        "laravel": { "providers": ["SpykraLabs\\Alba\\Adapters\\LaravelServiceProvider"] }
+    },
+    "minimum-stability": "stable"
+}

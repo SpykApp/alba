@@ -1,0 +1,69 @@
+/* Alba default theme: monochrome, square, dark + light. Override the variables. */
+:root{
+  --alba-bg:oklch(99% 0 0);--alba-fg:oklch(18% 0 0);--alba-muted:oklch(96% 0 0);--alba-muted-fg:oklch(45% 0 0);
+  --alba-border:oklch(88% 0 0);--alba-brand:oklch(18% 0 0);--alba-brand-fg:oklch(99% 0 0);
+  --alba-ok:#15803d;--alba-bad:#b42318;--alba-radius:0px;
+  --alba-font:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--alba-mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --alba-bg:oklch(13% 0 0);--alba-fg:oklch(94% 0 0);--alba-muted:oklch(20% 0 0);--alba-muted-fg:oklch(68% 0 0);
+  --alba-border:oklch(30% 0 0);--alba-brand:oklch(94% 0 0);--alba-brand-fg:oklch(13% 0 0);--alba-ok:#4ade80;--alba-bad:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --alba-bg:oklch(13% 0 0);--alba-fg:oklch(94% 0 0);--alba-muted:oklch(20% 0 0);--alba-muted-fg:oklch(68% 0 0);
+  --alba-border:oklch(30% 0 0);--alba-brand:oklch(94% 0 0);--alba-brand-fg:oklch(13% 0 0);--alba-ok:#4ade80;--alba-bad:#f87171;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--alba-bg);color:var(--alba-fg);font:15px/1.55 var(--alba-font)}
+.alba{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.alba-side{border-right:1px solid var(--alba-border);padding:28px 24px;display:flex;flex-direction:column;gap:28px;background:var(--alba-muted)}
+.alba-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:17px}
+.alba-brand img{height:26px}
+.alba-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px;flex:1}
+.alba-steps li{display:flex;align-items:center;gap:12px;color:var(--alba-muted-fg)}
+.alba-steps li.is-active{color:var(--alba-fg);font-weight:600}
+.alba-dot{width:26px;height:26px;border:1px solid var(--alba-border);display:grid;place-items:center;font-size:12px;border-radius:var(--alba-radius);background:var(--alba-bg)}
+.is-active .alba-dot{background:var(--alba-brand);color:var(--alba-brand-fg);border-color:var(--alba-brand)}
+.is-done .alba-dot{border-color:var(--alba-ok);color:var(--alba-ok)}
+.alba-toggle{align-self:flex-start;background:none;border:1px solid var(--alba-border);color:var(--alba-muted-fg);padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;border-radius:var(--alba-radius)}
+.alba-main{padding:48px clamp(20px,6vw,72px);max-width:760px;width:100%}
+.alba-head h1{margin:0 0 4px;font-size:28px;letter-spacing:-.02em}
+.alba-head p{margin:0 0 28px;color:var(--alba-muted-fg)}
+.alba-lead{color:var(--alba-muted-fg);max-width:60ch}
+.alba-list{list-style:none;padding:0;margin:24px 0;border:1px solid var(--alba-border)}
+.alba-list li{display:flex;justify-content:space-between;gap:16px;padding:12px 16px;border-bottom:1px solid var(--alba-border)}
+.alba-list li:last-child{border:0}.alba-list span{color:var(--alba-muted-fg);text-align:right}
+.alba-checks,.alba-tasks{list-style:none;padding:0;margin:0 0 8px;border:1px solid var(--alba-border)}
+.alba-checks li,.alba-tasks li{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--alba-border)}
+.alba-checks li:last-child,.alba-tasks li:last-child{border:0}
+.alba-check-detail{color:var(--alba-muted-fg);font-size:13px}
+.alba-badge{width:22px;height:22px;display:grid;place-items:center;font-size:12px;border:1px solid var(--alba-border);border-radius:var(--alba-radius)}
+.is-ok .alba-badge,[data-state=ok] .alba-badge{color:var(--alba-ok);border-color:var(--alba-ok)}
+.is-bad .alba-badge,[data-state=bad] .alba-badge{color:var(--alba-bad);border-color:var(--alba-bad)}
+[data-state=ok] .alba-badge::before{content:"\2713"}[data-state=bad] .alba-badge::before{content:"\2715"}
+[data-state=running] .alba-badge::before{content:"";width:10px;height:10px;border:2px solid var(--alba-fg);border-right-color:transparent;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.alba-tasks .alba-log{grid-column:2/-1;margin:0;padding:8px 10px;background:var(--alba-muted);font:12px/1.5 var(--alba-mono);white-space:pre-wrap;overflow:auto}
+.alba-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.alba-field{display:grid;gap:6px;margin-bottom:18px}
+.alba-field>span{font-size:13px;font-weight:600}
+.alba-field em{font-size:12px;color:var(--alba-muted-fg);font-style:normal}
+input,select,textarea{width:100%;padding:10px 12px;font:inherit;color:var(--alba-fg);background:var(--alba-bg);border:1px solid var(--alba-border);border-radius:var(--alba-radius)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--alba-fg);outline-offset:-1px}
+.alba-err{color:var(--alba-bad)}
+.alba-actions{margin-top:24px;display:flex;gap:12px}
+.alba-btn{display:inline-block;background:var(--alba-brand);color:var(--alba-brand-fg);border:1px solid var(--alba-brand);padding:10px 20px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none;border-radius:var(--alba-radius)}
+.alba-btn.is-ghost{background:none;color:var(--alba-fg);border-color:var(--alba-border)}
+.alba-btn[disabled]{opacity:.5;cursor:wait}
+.alba-alert{padding:12px 16px;border:1px solid var(--alba-border);margin-bottom:20px}
+.alba-alert.is-ok{border-color:var(--alba-ok);color:var(--alba-ok)}.alba-alert.is-bad{border-color:var(--alba-bad);color:var(--alba-bad)}
+.alba-foot{margin-top:56px;color:var(--alba-muted-fg);font-size:12px}
+code{font-family:var(--alba-mono);background:var(--alba-muted);padding:1px 5px}
+@media(max-width:820px){.alba{grid-template-columns:1fr}.alba-side{border:0;border-bottom:1px solid var(--alba-border);padding:16px}
+.alba-steps{flex-direction:row;overflow:auto;gap:18px}.alba-steps li span:last-child{display:none}.alba-steps li.is-active span:last-child{display:inline}.alba-grid{grid-template-columns:1fr}}
+.alba-logo{max-height:32px;max-width:100%}
+.alba-logo-dark{display:none}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .alba-logo-light{display:none}:root:not([data-theme="light"]) .alba-logo-dark{display:inline}}
+:root[data-theme="dark"] .alba-logo-light{display:none}:root[data-theme="dark"] .alba-logo-dark{display:inline}
+.alba-instructions{border-left:3px solid var(--alba-brand);background:var(--alba-muted);padding:12px 16px;margin:0 0 24px;color:var(--alba-fg)}
+.alba-instructions>:first-child{margin-top:0}.alba-instructions>:last-child{margin-bottom:0}
+.alba-foot a{color:inherit}
