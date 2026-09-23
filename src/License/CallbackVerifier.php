@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SpykraLabs\Alba\License;
 
 use Closure;
+use SpykraLabs\Alba\Support\Lang;
 
 /** Custom licensing: hand Alba a closure returning a LicenseResult (or bool). */
 final class CallbackVerifier implements LicenseVerifier
@@ -18,6 +19,6 @@ final class CallbackVerifier implements LicenseVerifier
 
         return $result instanceof LicenseResult
             ? $result
-            : ($result ? LicenseResult::valid() : LicenseResult::invalid('This licence is not valid.'));
+            : ($result ? LicenseResult::valid() : LicenseResult::invalid(Lang::t('license.invalid')));
     }
 }

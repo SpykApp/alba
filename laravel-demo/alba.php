@@ -25,10 +25,16 @@ return Alba::configure('Laravel Demo')
     ->framework($laravel)
     ->redirectTo('/')
     ->whenInstalled(InstalledBehavior::status(404))
+    ->locale('auto')          // follow the visitor's browser language
+    ->languageSwitcher()      // show a language picker in the sidebar
     ->poweredBy('Powered by Alba', 'https://github.com/spykralabs')
     ->steps([
         Welcome::make()
-            ->withHeading('Install Laravel Demo', 'A Laravel app installed with Alba.')
+            // Your own texts can be a string, or one string per language:
+            ->withHeading(
+                ['en' => 'Install Laravel Demo', 'es' => 'Instalar Laravel Demo', 'fr' => 'Installer Laravel Demo'],
+                ['en' => 'A Laravel app installed with Alba.', 'es' => 'Una app Laravel instalada con Alba.', 'fr' => 'Une application Laravel installée avec Alba.'],
+            )
             ->withInstructions('This wizard checks the server, writes <code>.env</code>, runs <code>artisan migrate</code> and <code>db:seed</code>, and finishes with Laravel\'s own commands.'),
 
         Requirements::make()->forFramework($laravel)->functions(['proc_open']),

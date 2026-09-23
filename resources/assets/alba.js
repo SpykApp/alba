@@ -15,7 +15,7 @@
     var sync = function (initial) {
       var sqlite = driver.value === 'sqlite';
       db.querySelectorAll('[data-net]').forEach(function (el) { el.hidden = sqlite; });
-      db.querySelector('[data-db-label]').textContent = sqlite ? 'Database file' : 'Database name';
+      db.querySelector('[data-db-label]').textContent = sqlite ? db.dataset.labelFile : db.dataset.labelName;
       if (initial) return;
       var name = db.querySelector('[name=database]');
       if (sqlite) name.value = db.dataset.sqliteDefault;
@@ -42,10 +42,10 @@
           var res = await fetch(tasks.dataset.runUrl + '/' + li.dataset.task, { method: 'POST', headers: { 'X-CSRF-Token': token } });
           var json = await res.json();
           ok = json.ok; text = json.log;
-        } catch (e) { text = 'Request failed: ' + e.message; }
+        } catch (e) { text = tasks.dataset.failed.replace('%s', e.message); }
         li.dataset.state = ok ? 'ok' : 'bad';
         log.textContent = text; log.hidden = !text;
-        if (!ok) { button.disabled = false; button.textContent = 'Retry'; return; }
+        if (!ok) { button.disabled = false; button.textContent = tasks.dataset.retry; return; }
       }
       tasks.submit();
     });

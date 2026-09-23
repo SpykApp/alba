@@ -9,6 +9,7 @@ use SpykraLabs\Alba\Files\FileAction;
 use SpykraLabs\Alba\Http\Request;
 use SpykraLabs\Alba\License\LicenseVerifier;
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 use SpykraLabs\Alba\Support\Validator;
 use Throwable;
 
@@ -17,13 +18,13 @@ final class License extends AbstractStep
 {
     protected string $key = 'license';
 
-    protected string $title = 'License';
+    protected string|array $title = 'License';
 
-    protected string $description = 'Verify your purchase.';
+    protected string|array $description = 'Verify your purchase.';
 
     private ?LicenseVerifier $verifier = null;
 
-    private string $codeLabel = 'Purchase code';
+    private string|array|null $codeLabel = null;
 
     /** @var array<string, list<FileAction>> */
     private array $actions = [];
@@ -38,7 +39,8 @@ final class License extends AbstractStep
         return $this;
     }
 
-    public function codeLabel(string $label): self
+    /** @param string|array<string, string> $label */
+    public function codeLabel(string|array $label): self
     {
         $this->codeLabel = $label;
 
@@ -65,14 +67,19 @@ final class License extends AbstractStep
         return $this;
     }
 
+    private function label(): string
+    {
+        return $this->codeLabel !== null ? Lang::text($this->codeLabel) : Lang::t('license.code');
+    }
+
     public function viewData(Context $ctx): array
     {
-        return ['codeLabel' => $this->codeLabel, 'extraFields' => $this->extraFields, 'license' => $ctx->license()];
+        return ['codeLabel' => $this->label(), 'extraFields' => $this->extraFields, 'license' => $ctx->license()];
     }
 
     public function handle(Request $request, Context $ctx): StepResult
     {
-        $errors = Validator::validate(['code' => ['label' => $this->codeLabel, 'rules' => 'required']], $request->body);
+        $errors = Validator::validate(['code' => ['label' => $this->label(), 'rules' => 'required']], $request->body);
         if ($errors) {
             return StepResult::fail($errors);
         }
@@ -83,11 +90,11 @@ final class License extends AbstractStep
         try {
             $result = $verifier->verify(trim((string) $request->input('code')), $extra);
         } catch (Throwable $e) {
-            return StepResult::fail(['code' => 'Could not verify the licence: '.$e->getMessage()]);
+            return StepResult::fail(['code' => Lang::t('license.failed', ['message' => $e->getMessage()])]);
         }
 
         if (! $result->valid) {
-            return StepResult::fail(['code' => $result->message ?: 'This licence is not valid.']);
+            return StepResult::fail(['code' => $result->message ?: Lang::t('license.invalid')]);
         }
 
         $log = [];
@@ -95,12 +102,12 @@ final class License extends AbstractStep
             try {
                 $log[] = $action->apply($ctx);
             } catch (Throwable $e) {
-                return StepResult::fail(['code' => 'Licence accepted, but file setup failed: '.$e->getMessage()]);
+                return StepResult::fail(['code' => Lang::t('license.files_failed', ['message' => $e->getMessage()])]);
             }
         }
 
         $ctx->state->put('license', ['type' => $result->type, 'meta' => $result->meta, 'log' => $log]);
 
-        return StepResult::ok("Licence verified ({$result->type}).");
+        return StepResult::ok(Lang::t('license.ok', ['type' => $result->type]));
     }
 }

@@ -67,3 +67,8 @@ code{font-family:var(--alba-mono);background:var(--alba-muted);padding:1px 5px}
 .alba-instructions{border-left:3px solid var(--alba-brand);background:var(--alba-muted);padding:12px 16px;margin:0 0 24px;color:var(--alba-fg)}
 .alba-instructions>:first-child{margin-top:0}.alba-instructions>:last-child{margin-bottom:0}
 .alba-foot a{color:inherit}
+.alba-langs{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px}
+.alba-langs a{color:var(--alba-muted-fg);text-decoration:none}
+.alba-langs a[aria-current]{color:var(--alba-fg);font-weight:600;text-decoration:underline}
+[dir=rtl] .alba-side{border-right:0;border-left:1px solid var(--alba-border)}
+[dir=rtl] .alba-list span{text-align:left}

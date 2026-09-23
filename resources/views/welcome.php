@@ -6,5 +6,5 @@
 <?php endforeach ?>
 </ul>
 <form method="post"><input type="hidden" name="_token" value="<?= $e($token) ?>">
-  <div class="alba-actions"><button class="alba-btn">Let's begin</button></div>
+  <div class="alba-actions"><button class="alba-btn"><?= $e($t('ui.begin')) ?></button></div>
 </form>

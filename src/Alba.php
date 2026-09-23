@@ -36,8 +36,23 @@ final class Alba
 
     private Framework|string|null $framework = null;
 
-    /** @var array{text: string, url: ?string}|false */
-    public array|false $poweredBy = ['text' => 'Alba · PHP App Installer by SpykraLabs', 'url' => null];
+    /** @var array{text: string|array<string, string>|null, url: ?string}|false  text null = translated default credit */
+    public array|false $poweredBy = ['text' => null, 'url' => null];
+
+    /** 'auto' detects the visitor's language; otherwise a fixed locale such as 'es'. */
+    public string $locale = 'en';
+
+    public string $fallbackLocale = 'en';
+
+    public ?string $langPath = null;
+
+    /** @var array<string, array<string, string>> */
+    public array $translations = [];
+
+    /** @var list<string>|null allowed locales, null = every available one */
+    public ?array $languages = null;
+
+    public bool $languageSwitcher = false;
 
     /** @var array<string, string> */
     public array $theme = [];
@@ -121,8 +136,67 @@ final class Alba
         return $this;
     }
 
-    /** The footer line. Pass false to hide it. Text is escaped; url is optional. */
-    public function poweredBy(string|false $text, ?string $url = null): self
+    /** Default language: a code like 'es' or 'pt-BR', or 'auto' to follow the visitor's browser. */
+    public function locale(string $locale): self
+    {
+        $this->locale = $locale;
+
+        return $this;
+    }
+
+    /** Used for any string missing in the active language (default 'en'). */
+    public function fallbackLocale(string $locale): self
+    {
+        $this->fallbackLocale = $locale;
+
+        return $this;
+    }
+
+    /** A folder of `{locale}.php` files that add languages or override built-in strings. */
+    public function langPath(string $path): self
+    {
+        $this->langPath = rtrim($path, '/\\');
+
+        return $this;
+    }
+
+    /**
+     * Add or override strings in code: ['es' => ['ui.continue' => 'Seguir']].
+     *
+     * @param  array<string, array<string, string>>  $translations
+     */
+    public function translations(array $translations): self
+    {
+        foreach ($translations as $locale => $lines) {
+            $this->translations[$locale] = $lines + ($this->translations[$locale] ?? []);
+        }
+
+        return $this;
+    }
+
+    /** Limit which languages visitors can pick or be detected. @param list<string> $locales */
+    public function languages(array $locales): self
+    {
+        $this->languages = $locales;
+
+        return $this;
+    }
+
+    /** Show a language switcher in the sidebar. */
+    public function languageSwitcher(bool $show = true): self
+    {
+        $this->languageSwitcher = $show;
+
+        return $this;
+    }
+
+    /**
+     * The footer line. Pass false to hide it. Text is escaped and may be a string or
+     * a locale keyed array; url is optional.
+     *
+     * @param  string|array<string, string>|false  $text
+     */
+    public function poweredBy(string|array|false $text, ?string $url = null): self
     {
         $this->poweredBy = $text === false ? false : ['text' => $text, 'url' => $url];
 

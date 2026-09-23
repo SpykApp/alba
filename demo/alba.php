@@ -20,6 +20,8 @@ return Alba::configure('Demo App')
         'wizard' => \SpykraLabs\Alba\Installed\InstalledBehavior::wizard(),
         default => \SpykraLabs\Alba\Installed\InstalledBehavior::page(),
     })
+    ->locale('auto')          // follow the visitor's browser language
+    ->languageSwitcher()      // show a language picker in the sidebar
     ->poweredBy('Powered by Demo App Inc.', 'https://example.com')
     ->steps([
         Welcome::make()->withHeading('Welcome to Demo App', 'Setup takes about two minutes.')

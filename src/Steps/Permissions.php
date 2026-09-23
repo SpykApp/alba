@@ -6,14 +6,15 @@ namespace SpykraLabs\Alba\Steps;
 
 use SpykraLabs\Alba\Http\Request;
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 
 final class Permissions extends AbstractStep
 {
     protected string $key = 'permissions';
 
-    protected string $title = 'Permissions';
+    protected string|array $title = 'Permissions';
 
-    protected string $description = 'Check that folders and files are writable.';
+    protected string|array $description = 'Check that folders and files are writable.';
 
     /** @var list<string> */
     private array $paths = [];
@@ -45,8 +46,8 @@ final class Permissions extends AbstractStep
             // A missing path only needs a writable parent (it will be created).
             $target = file_exists($path) ? $path : dirname($path);
             $ok = is_writable($target);
-            $mode = file_exists($path) ? substr(sprintf('%o', fileperms($path)), -4) : 'will be created';
-            $checks[] = ['label' => $relative, 'ok' => $ok, 'detail' => $ok ? "Writable ($mode)" : 'Not writable'];
+            $mode = file_exists($path) ? substr(sprintf('%o', fileperms($path)), -4) : Lang::t('perm.will_be_created');
+            $checks[] = ['label' => $relative, 'ok' => $ok, 'detail' => $ok ? Lang::t('perm.writable', ['mode' => $mode]) : Lang::t('perm.not_writable')];
         }
 
         return ['checks' => $checks, 'passed' => ! in_array(false, array_column($checks, 'ok'), true)];
@@ -56,6 +57,6 @@ final class Permissions extends AbstractStep
     {
         return $this->viewData($ctx)['passed']
             ? StepResult::ok()
-            : StepResult::fail('Make the listed paths writable, then re-check.');
+            : StepResult::fail(Lang::t('perm.failed'));
     }
 }

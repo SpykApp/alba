@@ -10,7 +10,7 @@
 </ul>
 <form method="post"><input type="hidden" name="_token" value="<?= $e($token) ?>">
   <div class="alba-actions">
-    <?php if ($passed): ?><button class="alba-btn">Continue</button>
-    <?php else: ?><a class="alba-btn is-ghost" href="">Re-check</a><?php endif ?>
+    <?php if ($passed): ?><button class="alba-btn"><?= $e($t('ui.continue')) ?></button>
+    <?php else: ?><a class="alba-btn is-ghost" href=""><?= $e($t('ui.recheck')) ?></a><?php endif ?>
   </div>
 </form>

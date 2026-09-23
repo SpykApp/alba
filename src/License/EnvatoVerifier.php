@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SpykraLabs\Alba\License;
 
 use RuntimeException;
+use SpykraLabs\Alba\Support\Lang;
 
 /**
  * Verifies an Envato Market purchase code against the author sale API.
@@ -27,7 +28,7 @@ final class EnvatoVerifier implements LicenseVerifier
     public function verify(string $code, array $extra = []): LicenseResult
     {
         if (! preg_match('/^[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}$/i', $code)) {
-            return LicenseResult::invalid('That does not look like an Envato purchase code.');
+            return LicenseResult::invalid(Lang::t('license.envato_format'));
         }
 
         $ch = curl_init($this->endpoint.'?code='.urlencode($code));
@@ -44,7 +45,7 @@ final class EnvatoVerifier implements LicenseVerifier
             throw new RuntimeException('Could not reach the Envato API.');
         }
         if ($status === 404) {
-            return LicenseResult::invalid('Purchase code not found.');
+            return LicenseResult::invalid(Lang::t('license.envato_not_found'));
         }
         if ($status !== 200) {
             throw new RuntimeException("Envato API returned HTTP $status.");
@@ -52,7 +53,7 @@ final class EnvatoVerifier implements LicenseVerifier
 
         $sale = json_decode($body, true);
         if ($this->itemId !== null && (int) ($sale['item']['id'] ?? 0) !== $this->itemId) {
-            return LicenseResult::invalid('This purchase code belongs to a different product.');
+            return LicenseResult::invalid(Lang::t('license.envato_other_item'));
         }
 
         $license = (string) ($sale['license'] ?? '');

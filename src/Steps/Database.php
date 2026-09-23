@@ -7,6 +7,7 @@ namespace SpykraLabs\Alba\Steps;
 use PDOException;
 use SpykraLabs\Alba\Http\Request;
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 use SpykraLabs\Alba\Support\Database as Connector;
 use SpykraLabs\Alba\Support\EnvWriter;
 use SpykraLabs\Alba\Support\Validator;
@@ -15,9 +16,9 @@ final class Database extends AbstractStep
 {
     protected string $key = 'database';
 
-    protected string $title = 'Database';
+    protected string|array $title = 'Database';
 
-    protected string $description = 'Connect the application to its database.';
+    protected string|array $description = 'Connect the application to its database.';
 
     /** @var list<string> */
     private array $drivers = ['mysql', 'pgsql', 'sqlite'];
@@ -52,16 +53,16 @@ final class Database extends AbstractStep
     {
         $driver = (string) $request->input('driver');
         if (! in_array($driver, $this->drivers, true)) {
-            return StepResult::fail(['driver' => 'Choose a supported database driver.']);
+            return StepResult::fail(['driver' => Lang::t('db.choose_driver')]);
         }
 
         $isSqlite = $driver === 'sqlite';
         $errors = Validator::validate([
-            'database' => ['label' => $isSqlite ? 'Database file' : 'Database name', 'rules' => 'required'],
+            'database' => ['label' => Lang::t($isSqlite ? 'db.file' : 'db.name'), 'rules' => 'required'],
             ...($isSqlite ? [] : [
-                'host' => ['label' => 'Host', 'rules' => 'required'],
-                'port' => ['label' => 'Port', 'rules' => 'required|numeric'],
-                'username' => ['label' => 'Username', 'rules' => 'required'],
+                'host' => ['label' => Lang::t('db.host'), 'rules' => 'required'],
+                'port' => ['label' => Lang::t('db.port'), 'rules' => 'required|numeric'],
+                'username' => ['label' => Lang::t('db.username'), 'rules' => 'required'],
             ]),
         ], $request->body);
         if ($errors) {
@@ -80,7 +81,7 @@ final class Database extends AbstractStep
         try {
             Connector::connect($db, $ctx);
         } catch (PDOException $e) {
-            return StepResult::fail('Could not connect: '.$e->getMessage());
+            return StepResult::fail(Lang::t('db.connect_failed', ['message' => $e->getMessage()]));
         }
 
         $ctx->state->put('db', $db);
@@ -89,7 +90,7 @@ final class Database extends AbstractStep
             try {
                 $framework->writeDatabase($ctx, $db);
             } catch (\Throwable $e) {
-                return StepResult::fail('Connected, but could not write the configuration: '.$e->getMessage());
+                return StepResult::fail(Lang::t('db.write_failed', ['message' => $e->getMessage()]));
             }
         } elseif ($ctx->alba->envFile !== null) {
             (new EnvWriter($ctx->path($ctx->alba->envFile)))->set([
@@ -102,6 +103,6 @@ final class Database extends AbstractStep
             ]);
         }
 
-        return StepResult::ok('Database connection verified.');
+        return StepResult::ok(Lang::t('db.verified'));
     }
 }

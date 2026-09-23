@@ -32,15 +32,16 @@ Throughout this document, the **developer** is you (the person shipping an app w
 14. [Access control (guard)](#access-control-guard)
 15. [Branding, headings and instructions](#branding-headings-and-instructions)
 16. [Theming](#theming)
-17. [Custom steps](#custom-steps)
-18. [The Context object](#the-context-object)
-19. [State, lock file and `.env`](#state-lock-file-and-env)
-20. [Security](#security)
-21. [Demo](#demo)
-22. [Troubleshooting](#troubleshooting)
-23. [Project status](#project-status)
-24. [Contributing](#contributing)
-25. [License](#license)
+17. [Languages (i18n)](#languages-i18n)
+18. [Custom steps](#custom-steps)
+19. [The Context object](#the-context-object)
+20. [State, lock file and `.env`](#state-lock-file-and-env)
+21. [Security](#security)
+22. [Demo](#demo)
+23. [Troubleshooting](#troubleshooting)
+24. [Project status](#project-status)
+25. [Contributing](#contributing)
+26. [License](#license)
 
 ---
 
@@ -62,6 +63,7 @@ Throughout this document, the **developer** is you (the person shipping an app w
 | Configurable route | Serve the installer at `/install`, `/system/install` or any path. |
 | Installed behaviour | After installation show a page, return an HTTP status, redirect, or keep the wizard available. |
 | Theming | Dark and light mode, logos for each mode, CSS variables, theme packs (installable or folder based), template overrides. |
+| Languages | English, Spanish, French, German, Dutch, Portuguese, Polish and Greek built in. Auto-detects the browser language, optional language switcher, add or override any string, translate your own texts. |
 | Custom branding | Your logo, your own "powered by" line (or none). |
 | Framework agnostic | Own tiny request and response objects. Adapters for plain PHP, PSR-15 and Laravel. |
 
@@ -252,7 +254,13 @@ Keep Alba's storage directory (`storage/alba` by default) out of the public web 
 | `redirectTo(string $url)` | `/` | Where the Finish step sends the user, and the default target of the "Open the app" button. |
 | `steps(array $steps)` | none | The ordered list of steps. |
 | `theme(array\|Theme $theme)` | default theme | A theme pack, or an array with `title`, `logo`, `brand`, `radius`, `font`. |
-| `poweredBy(string\|false $text, ?string $url)` | Alba credit | The footer line. `false` hides it. |
+| `poweredBy(string\|array\|false $text, ?string $url)` | Alba credit | The footer line. `false` hides it. |
+| `locale(string $locale)` | `en` | Default language (`es`, `pt-BR`, ...), or `auto` to follow the visitor's browser. |
+| `fallbackLocale(string $locale)` | `en` | Language used for any string missing in the active one. |
+| `langPath(string $path)` | none | Folder of `{locale}.php` files that add languages or override strings. |
+| `translations(array $lines)` | none | Add or override strings in code. |
+| `languages(array $codes)` | all available | Limit the languages that can be chosen or detected. |
+| `languageSwitcher(bool $show = true)` | off | Show a language picker in the sidebar. |
 | `extraCss(string $path)` | none | Absolute path to a CSS file loaded after everything else. |
 | `viewsPath(string $path)` | none | A folder of template overrides. Searched before theme and package templates. |
 | `guard(Closure $guard)` | none | Return `false` to block access. See [Access control](#access-control-guard). |
@@ -907,6 +915,119 @@ Any form you write must include `<input type="hidden" name="_token" value="<?= $
 
 ---
 
+## Languages (i18n)
+
+The installer ships in eight languages:
+
+| Code | Language |
+|---|---|
+| `en` | English (source and fallback) |
+| `es` | Español |
+| `fr` | Français |
+| `de` | Deutsch |
+| `nl` | Nederlands |
+| `pt` | Português (Brazilian wording; see below for European Portuguese) |
+| `pl` | Polski |
+| `el` | Ελληνικά |
+
+Every built-in string is translated: step names and descriptions, buttons, form labels, requirement and permission messages, validation errors, database and licence messages, the "already installed" page, and the messages shown by the task runner. The translations for languages other than English were written for this project and have not been reviewed by native speakers, so please report or correct anything that reads wrong.
+
+### Choosing the language
+
+```php
+->locale('es')            // always Spanish
+->locale('auto')          // follow the visitor's browser (Accept-Language), falling back to fallbackLocale
+->fallbackLocale('en')    // used for missing strings and unsupported browser languages
+->languageSwitcher()      // show a language picker in the sidebar
+->languages(['en', 'es', 'fr'])   // only allow these languages
+```
+
+Order of precedence for each request:
+
+1. `?lang=xx` in the URL. The choice is remembered in the `alba_locale` cookie.
+2. The `alba_locale` cookie.
+3. The browser language, when `locale('auto')` is set.
+4. The configured `locale()`.
+5. The fallback locale.
+
+Codes such as `pt-BR` match a `pt-BR` file first, then `pt`. Only languages that exist (built in, in your lang folder or in `translations()`) can be chosen. `languageSwitcher()` only appears when more than one language is available.
+
+### Translating your own texts
+
+Every text you pass to Alba can be a plain string or a locale keyed array:
+
+```php
+Welcome::make()
+    ->withHeading(
+        ['en' => 'Install Acme', 'es' => 'Instalar Acme'],
+        ['en' => 'Setup takes two minutes.', 'es' => 'La instalación tarda dos minutos.'],
+    )
+    ->withInstructions(['en' => '<p>Have your key ready.</p>', 'es' => '<p>Ten tu clave a mano.</p>'])
+    ->intro(['en' => 'Welcome!', 'es' => '¡Bienvenido!']);
+
+Questions::make()->field('app_name', ['en' => 'Application name', 'es' => 'Nombre de la aplicación'], help: ['en' => '...', 'es' => '...']);
+
+License::make()->codeLabel(['en' => 'License key', 'es' => 'Clave de licencia']);
+TaskStep::named('cache', ['en' => 'Cache', 'es' => 'Caché'], button: ['en' => 'Warm up', 'es' => 'Calentar']);
+
+->poweredBy(['en' => 'Powered by Acme', 'es' => 'Con tecnología de Acme'], 'https://acme.example')
+->theme(['title' => ['en' => 'Acme Setup', 'es' => 'Instalación de Acme']])
+->whenInstalled(InstalledBehavior::page(title: ['en' => 'Done', 'es' => 'Listo']))
+```
+
+Arrays are accepted by `withTitle`, `withHeading`, `withInstructions`, `Welcome::intro`, `Finish::message`, `Questions::field` (label and help), `License::codeLabel`, `TaskStep::named`, `poweredBy`, the theme `title` and `InstalledBehavior::page`. If the active language is missing from the array, Alba tries the fallback locale, then the first entry.
+
+Texts returned by your own code (a licence verifier's `LicenseResult::invalid('...')`, custom step errors, task logs) are shown exactly as you write them. Use `SpykraLabs\Alba\Support\Lang::t('key')` or `Lang::text([...])` inside them if you want them translated too.
+
+### Adding a language or overriding strings
+
+**Add a language file.** Create a folder of `{code}.php` files and register it:
+
+```php
+->langPath(__DIR__.'/lang')
+```
+
+```php
+// lang/it.php
+return [
+    'meta.name' => 'Italiano',   // name shown in the language switcher
+    'meta.dir'  => 'ltr',        // 'rtl' for right-to-left languages
+    'ui.continue' => 'Continua',
+    // any keys you leave out fall back to English
+];
+```
+
+A file with the same code as a built-in language (for example `pt.php` or `pt-PT.php`) overrides only the keys it contains, so you can adjust wording or provide European Portuguese without copying everything.
+
+**Override in code:**
+
+```php
+->translations([
+    'en' => ['ui.begin' => 'Start the installation'],
+    'es' => ['ui.begin' => 'Empezar la instalación'],
+])
+```
+
+Precedence, highest first: `translations()`, your `langPath()` files, the package's files; then the same for the fallback locale.
+
+### Placeholders and right-to-left
+
+Strings use `:name` placeholders (for example `'req.installed' => 'Installed: :version'`). Keep them in every translation. Set `'meta.dir' => 'rtl'` in an RTL language file to switch the page direction; the layout mirrors the sidebar.
+
+### String keys
+
+All keys are in `resources/lang/en.php`. Groups: `meta.*`, `ui.*` (buttons and general messages), `step.{key}.title|description|button|intro|message` (built-in steps), `req.*`, `perm.*`, `db.*`, `license.*`, `finish.*`, `installed.*` and `val.*` (validation).
+
+Built-in step titles are looked up by step key, so a step you rename with `withTitle()` uses your text, and a step whose key you change with `withKey()` needs its own `step.{key}.title` line to be translated.
+
+Not translated: task log output (SQL file names, command output, "copied X to Y" lines), technical exception messages from PDO or other libraries, and the names of database drivers (MySQL, PostgreSQL, SQLite).
+
+### Theme packs and languages
+
+Theme packs style the installer and do not carry translations. Ship translations next to a theme as a `lang/` folder that the buyer registers with `langPath()`.
+
+---
+
 ## Custom steps
 
 Extend `AbstractStep` (recommended) or implement `StepInterface`:
@@ -1028,6 +1149,8 @@ php -S localhost:8088 -t demo/public
 
 Open `http://localhost:8088/install`. Use the licence key `ALBA-PRO-0001` (pro edition) or `ALBA-LITE-0001` (lite edition). The demo shows requirements, permissions, database, licence with file copy and delete, custom questions, migration, seeding, post-install commands and the finish step.
 
+The demos use `locale('auto')` with the language switcher on: open them with a different browser language, or add `?lang=es`.
+
 Useful switches (environment variables read by `demo/alba.php`):
 
 ```bash
@@ -1083,6 +1206,8 @@ Verified: the full flow (all steps, licence based file actions, env writing, mig
 Partly verified: for Symfony, CodeIgniter, Yii 2, CakePHP, WordPress, Phinx and Doctrine Migrations, the config files Alba writes (`.env.local`, `.env`, `config/db.php`, `config/app_local.php`, `wp-config.php`) were generated and inspected, and the placeholder and config tasks were exercised. The framework commands those presets run (for example `bin/console doctrine:migrations:migrate`) were not executed against real applications, and the Drupal preset was not run at all.
 
 The Laravel service provider (auto-discovery, route mounting outside the web middleware group) was verified in `laravel-demo`.
+
+Languages: the built-in files were checked for identical keys and placeholders, and detection, the switcher, overrides, `langPath()`, locale arrays and fallbacks were exercised. The Greek page was checked in a browser. The non-English translations have not had a native-speaker review.
 
 Not yet verified: the PSR-15 adapter has not been run against Symfony, Slim or Mezzio applications, the Envato verifier has not been called against the live API, and the automated test suite is still to be written. Treat those parts as untested until you have tried them in your own project, and please report what you find.
 

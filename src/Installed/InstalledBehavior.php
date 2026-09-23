@@ -24,12 +24,14 @@ final class InstalledBehavior
     /**
      * Show a themed "already installed" page (the default).
      *
+     * Texts may be strings or locale keyed arrays; null uses the translated default.
+     *
      * @param  ?string  $buttonUrl  where the button goes; defaults to Alba::redirectTo. Pass '' to hide the button.
      */
     public static function page(
-        string $title = 'Already installed',
-        string $message = 'This application has been installed and the installer is locked.',
-        string $buttonLabel = 'Open the app',
+        string|array|null $title = null,
+        string|array|null $message = null,
+        string|array|null $buttonLabel = null,
         ?string $buttonUrl = null,
         int $status = 200,
     ): self {

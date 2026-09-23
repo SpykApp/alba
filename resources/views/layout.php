@@ -1,16 +1,16 @@
 <?php
 $theme = $alba->theme;
 $base = rtrim($alba->route, '/').'/_alba';
-$title = $theme['title'] ?? $alba->name;
+$title = $text($theme['title'] ?? $alba->name);
 $keys = array_keys($steps);
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= $e($locale) ?>" dir="<?= $e($dir) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title><?= $e($title) ?> - Installer</title>
+<title><?= $e($title) ?> - <?= $e($t('ui.installer')) ?></title>
 <script>try{var t=localStorage.getItem('alba-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="stylesheet" href="<?= $e($base) ?>/alba.css">
 <?php if ($hasThemeCss): ?><link rel="stylesheet" href="<?= $e($base) ?>/theme.css"><?php endif ?>
@@ -37,11 +37,16 @@ $keys = array_keys($steps);
         </li>
       <?php endforeach ?>
     </ol>
-    <button type="button" class="alba-toggle" data-theme-toggle>Toggle theme</button>
+    <button type="button" class="alba-toggle" data-theme-toggle><?= $e($t('ui.toggle_theme')) ?></button>
+    <?php if (count($languages) > 1): ?>
+      <nav class="alba-langs" aria-label="<?= $e($t('ui.language')) ?>">
+        <?php foreach ($languages as $code => $name): ?><a href="?lang=<?= $e($code) ?>" <?= $code === $locale ? 'aria-current="true"' : '' ?>><?= $e($name) ?></a><?php endforeach ?>
+      </nav>
+    <?php endif ?>
   </aside>
   <main class="alba-main">
     <?= $content ?>
-    <?php if ($alba->poweredBy): ?><p class="alba-foot"><?php if ($alba->poweredBy['url']): ?><a href="<?= $e($alba->poweredBy['url']) ?>" target="_blank" rel="noopener"><?= $e($alba->poweredBy['text']) ?></a><?php else: ?><?= $e($alba->poweredBy['text']) ?><?php endif ?></p><?php endif ?>
+    <?php if ($alba->poweredBy): $credit = $alba->poweredBy['text'] !== null ? $text($alba->poweredBy['text']) : $t('ui.powered_by'); ?><p class="alba-foot"><?php if ($alba->poweredBy['url']): ?><a href="<?= $e($alba->poweredBy['url']) ?>" target="_blank" rel="noopener"><?= $e($credit) ?></a><?php else: ?><?= $e($credit) ?><?php endif ?></p><?php endif ?>
   </main>
 </div>
 <script src="<?= $e($base) ?>/alba.js"></script>

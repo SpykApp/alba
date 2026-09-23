@@ -11,7 +11,9 @@ use SpykraLabs\Alba\Steps\StepInterface;
 use SpykraLabs\Alba\Steps\StepResult;
 use SpykraLabs\Alba\Steps\TaskStep;
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 use SpykraLabs\Alba\Support\StateStore;
+use SpykraLabs\Alba\Support\Translator;
 use SpykraLabs\Alba\Support\View;
 
 /** Framework-agnostic request router for the installer wizard. */
@@ -28,6 +30,10 @@ final class Kernel
 
     private bool $newToken = false;
 
+    private Translator $translator;
+
+    private ?string $localeCookie = null;
+
     public function __construct(private Alba $alba)
     {
         $this->ctx = new Context($alba, new StateStore($alba->storagePath));
@@ -41,9 +47,10 @@ final class Kernel
     {
         $path = '/'.trim($request->path, '/');
         $base = rtrim($this->alba->route, '/');
+        $this->bootLocale($request);
 
         if ($base !== '' && $path !== $base && ! str_starts_with($path, $base.'/')) {
-            return new Response('Not found', 404, ['Content-Type' => 'text/plain']);
+            return new Response(Lang::t('ui.not_found'), 404, ['Content-Type' => 'text/plain']);
         }
         $rest = trim(substr($path, strlen($base)), '/');
 
@@ -57,8 +64,60 @@ final class Kernel
         if ($this->newToken) {
             $response->withCookie('alba_csrf', $this->token);
         }
+        if ($this->localeCookie) {
+            $response->withCookie('alba_locale', $this->localeCookie);
+        }
 
         return $response;
+    }
+
+    /** Pick the language: ?lang= (remembered), cookie, browser (when locale is 'auto'), configured default. */
+    private function bootLocale(Request $request): void
+    {
+        $available = array_keys((new Translator($this->alba, $this->alba->fallbackLocale))->available());
+        $chosen = null;
+
+        $query = $request->query['lang'] ?? null;
+        if (is_string($query) && in_array($query, $available, true)) {
+            $chosen = $this->localeCookie = $query;
+        }
+        $cookie = $request->cookies['alba_locale'] ?? null;
+        if (! $chosen && is_string($cookie) && in_array($cookie, $available, true)) {
+            $chosen = $cookie;
+        }
+        if (! $chosen && $this->alba->locale === 'auto') {
+            $chosen = $this->fromAcceptLanguage($request->headers['accept-language'] ?? '', $available);
+        }
+        if (! $chosen && $this->alba->locale !== 'auto' && in_array($this->alba->locale, $available, true)) {
+            $chosen = $this->alba->locale;
+        }
+        $chosen ??= in_array($this->alba->fallbackLocale, $available, true) ? $this->alba->fallbackLocale : ($available[0] ?? 'en');
+
+        $this->translator = new Translator($this->alba, $chosen);
+        Lang::use($this->translator);
+    }
+
+    /** @param list<string> $available */
+    private function fromAcceptLanguage(string $header, array $available): ?string
+    {
+        $lookup = array_combine(array_map('strtolower', $available), $available);
+        $wanted = [];
+        foreach (explode(',', $header) as $part) {
+            [$tag, $q] = array_pad(explode(';q=', trim($part), 2), 2, '1');
+            if ($tag !== '' && $tag !== '*') {
+                $wanted[strtolower(trim($tag))] = (float) $q;
+            }
+        }
+        arsort($wanted);
+        foreach (array_keys($wanted) as $tag) {
+            foreach ([$tag, explode('-', $tag)[0]] as $try) {
+                if (isset($lookup[$try])) {
+                    return $lookup[$try];
+                }
+            }
+        }
+
+        return null;
     }
 
     private function route(Request $request, string $rest): Response
@@ -85,7 +144,7 @@ final class Kernel
 
         $step = $this->steps[$segments[0]] ?? null;
         if (! $step) {
-            return new Response('Not found', 404, ['Content-Type' => 'text/plain']);
+            return new Response(Lang::t('ui.not_found'), 404, ['Content-Type' => 'text/plain']);
         }
         if (array_search($step->key(), $keys, true) > $current) {
             return Response::redirect($this->ctx->url($keys[$current]));
@@ -129,7 +188,7 @@ final class Kernel
     private function submit(Request $request, StepInterface $step, array $keys): Response
     {
         if (! hash_equals($this->token, (string) $request->input('_token', ''))) {
-            return new Response('Page expired. Reload and try again.', 419, ['Content-Type' => 'text/plain']);
+            return new Response(Lang::t('ui.page_expired'), 419, ['Content-Type' => 'text/plain']);
         }
 
         $result = $step->handle($request, $this->ctx);
@@ -158,18 +217,18 @@ final class Kernel
     {
         $sent = $request->headers['x-csrf-token'] ?? (string) $request->input('_token', '');
         if (! hash_equals($this->token, $sent)) {
-            return Response::json(['ok' => false, 'log' => 'Page expired. Reload and try again.'], 419);
+            return Response::json(['ok' => false, 'log' => Lang::t('ui.page_expired')], 419);
         }
 
         // Tasks run strictly in order: every earlier task must have succeeded.
         $results = $this->ctx->state->get('tasks', [])[$step->key()] ?? [];
         for ($i = 0; $i < $index; $i++) {
             if (! ($results[$i]['ok'] ?? false)) {
-                return Response::json(['ok' => false, 'log' => 'Earlier tasks have not completed.'], 409);
+                return Response::json(['ok' => false, 'log' => Lang::t('ui.earlier_incomplete')], 409);
             }
         }
         if (! isset($step->tasks()[$index])) {
-            return Response::json(['ok' => false, 'log' => 'Unknown task.'], 404);
+            return Response::json(['ok' => false, 'log' => Lang::t('ui.unknown_task')], 404);
         }
 
         return Response::json($step->runTask($index, $this->ctx));
@@ -197,7 +256,7 @@ final class Kernel
             }
         }
         if (! isset($types[$file])) {
-            return new Response('Not found', 404, ['Content-Type' => 'text/plain']);
+            return new Response(Lang::t('ui.not_found'), 404, ['Content-Type' => 'text/plain']);
         }
 
         return new Response(
@@ -229,6 +288,9 @@ final class Kernel
             'steps' => $this->steps,
             'active' => $active?->key(),
             'done' => $this->ctx->state->get('done', []),
+            'locale' => $this->translator->locale,
+            'dir' => $this->translator->direction(),
+            'languages' => $this->alba->languageSwitcher ? $this->translator->available() : [],
             'hasCustomCss' => (bool) ($this->alba->extraCss && is_file($this->alba->extraCss)),
             'hasThemeCss' => (bool) ($this->alba->themePack?->cssFile() && is_file($this->alba->themePack->cssFile())),
             'tokensCss' => \SpykraLabs\Alba\Themes\Tokens::css($this->alba),

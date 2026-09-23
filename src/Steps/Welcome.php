@@ -5,18 +5,20 @@ declare(strict_types=1);
 namespace SpykraLabs\Alba\Steps;
 
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 
 final class Welcome extends AbstractStep
 {
     protected string $key = 'welcome';
 
-    protected string $title = 'Welcome';
+    protected string|array $title = 'Welcome';
 
-    protected string $description = 'Get ready to install.';
+    protected string|array $description = 'Get ready to install.';
 
-    private string $intro = 'This wizard will check your server, connect your database and set the application up. It takes a couple of minutes.';
+    private string|array|null $intro = null;
 
-    public function intro(string $text): self
+    /** @param string|array<string, string> $text */
+    public function intro(string|array $text): self
     {
         $this->intro = $text;
 
@@ -25,6 +27,6 @@ final class Welcome extends AbstractStep
 
     public function viewData(Context $ctx): array
     {
-        return ['intro' => $this->intro];
+        return ['intro' => $this->intro !== null ? Lang::text($this->intro) : Lang::t('step.welcome.intro')];
     }
 }

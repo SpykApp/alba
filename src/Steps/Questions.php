@@ -14,25 +14,27 @@ final class Questions extends AbstractStep
 {
     protected string $key = 'settings';
 
-    protected string $title = 'Settings';
+    protected string|array $title = 'Settings';
 
-    protected string $description = 'Tell us about your installation.';
+    protected string|array $description = 'Tell us about your installation.';
 
     /** @var array<string, array<string, mixed>> */
     private array $fields = [];
 
     /**
+     * @param  string|array<string, string>  $label  text, or ['en' => ..., 'es' => ...]
+     * @param  string|array<string, string>|null  $help  same
      * @param  string  $type  text|email|password|url|number|select|textarea
      * @param  array<string, string>  $options  for select fields (value => label)
      */
     public function field(
         string $name,
-        string $label,
+        string|array $label,
         string $type = 'text',
         string $rules = '',
         ?string $env = null,
         string $default = '',
-        ?string $help = null,
+        string|array|null $help = null,
         array $options = [],
     ): self {
         $this->fields[$name] = compact('label', 'type', 'rules', 'env', 'default', 'help', 'options');

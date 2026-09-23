@@ -1,5 +1,5 @@
 <?= $view->render("partials_head", get_defined_vars()) ?>
-<form method="post" data-tasks data-run-url="<?= $e($ctx->url($step->key())) ?>/run"><input type="hidden" name="_token" value="<?= $e($token) ?>">
+<form method="post" data-tasks data-run-url="<?= $e($ctx->url($step->key())) ?>/run" data-retry="<?= $e($t('ui.retry')) ?>" data-failed="<?= $e($t('ui.request_failed', ['message' => '%s'])) ?>"><input type="hidden" name="_token" value="<?= $e($token) ?>">
   <ul class="alba-tasks">
   <?php foreach ($tasks as $i => $t):
     $r = $results[$i] ?? null;

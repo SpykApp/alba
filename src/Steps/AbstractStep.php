@@ -6,20 +6,25 @@ namespace SpykraLabs\Alba\Steps;
 
 use SpykraLabs\Alba\Http\Request;
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 
 abstract class AbstractStep implements StepInterface
 {
     protected string $key = '';
 
-    protected string $title = '';
+    protected string|array $title = '';
 
-    protected string $description = '';
+    protected string|array $description = '';
 
-    protected ?string $heading = null;
+    protected bool $titleSet = false;
 
-    protected ?string $subheading = null;
+    protected bool $descriptionSet = false;
 
-    protected ?string $instructions = null;
+    protected string|array|null $heading = null;
+
+    protected string|array|null $subheading = null;
+
+    protected string|array|null $instructions = null;
 
     public static function make(): static
     {
@@ -33,31 +38,34 @@ abstract class AbstractStep implements StepInterface
 
     public function title(): string
     {
-        return $this->title;
+        return $this->titleSet ? Lang::text($this->title) : Lang::t("step.{$this->key}.title", [], Lang::text($this->title));
     }
 
     public function description(): string
     {
-        return $this->description;
+        return $this->descriptionSet
+            ? Lang::text($this->description)
+            : Lang::t("step.{$this->key}.description", [], Lang::text($this->description));
     }
 
     public function heading(): string
     {
-        return $this->heading ?? $this->title();
+        return $this->heading !== null ? Lang::text($this->heading) : $this->title();
     }
 
     public function subheading(): string
     {
-        return $this->subheading ?? $this->description();
+        return $this->subheading !== null ? Lang::text($this->subheading) : $this->description();
     }
 
     public function instructions(): ?string
     {
-        return $this->instructions;
+        return $this->instructions === null ? null : Lang::text($this->instructions);
     }
 
     /** Override the page heading (the sidebar keeps the short title). */
-    public function withHeading(string $heading, ?string $subheading = null): static
+    /** @param string|array<string, string> $heading  text, or ['en' => ..., 'es' => ...] */
+    public function withHeading(string|array $heading, string|array|null $subheading = null): static
     {
         $this->heading = $heading;
         $this->subheading = $subheading ?? $this->subheading;
@@ -66,17 +74,22 @@ abstract class AbstractStep implements StepInterface
     }
 
     /** Guidance for the user on this step. Trusted HTML: links, lists, <code> are fine. */
-    public function withInstructions(string $html): static
+    public function withInstructions(string|array $html): static
     {
         $this->instructions = $html;
 
         return $this;
     }
 
-    public function withTitle(string $title, ?string $description = null): static
+    /** @param string|array<string, string> $title  text, or ['en' => ..., 'es' => ...] */
+    public function withTitle(string|array $title, string|array|null $description = null): static
     {
         $this->title = $title;
-        $this->description = $description ?? $this->description;
+        $this->titleSet = true;
+        if ($description !== null) {
+            $this->description = $description;
+            $this->descriptionSet = true;
+        }
 
         return $this;
     }

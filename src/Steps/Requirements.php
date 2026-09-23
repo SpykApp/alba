@@ -6,14 +6,15 @@ namespace SpykraLabs\Alba\Steps;
 
 use SpykraLabs\Alba\Http\Request;
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 
 final class Requirements extends AbstractStep
 {
     protected string $key = 'requirements';
 
-    protected string $title = 'Requirements';
+    protected string|array $title = 'Requirements';
 
-    protected string $description = 'Check that the server can run the application.';
+    protected string|array $description = 'Check that the server can run the application.';
 
     private string $php = '8.1.0';
 
@@ -71,25 +72,25 @@ final class Requirements extends AbstractStep
     public function checks(): array
     {
         $checks = [[
-            'label' => "PHP >= {$this->php}",
+            'label' => Lang::t('req.php', ['version' => $this->php]),
             'ok' => version_compare(PHP_VERSION, $this->php, '>='),
-            'detail' => 'Installed: '.PHP_VERSION,
+            'detail' => Lang::t('req.installed', ['version' => PHP_VERSION]),
         ]];
 
         foreach ($this->extensions as $extension) {
             $loaded = extension_loaded($extension);
-            $checks[] = ['label' => "Extension: $extension", 'ok' => $loaded, 'detail' => $loaded ? 'Loaded' : 'Missing'];
+            $checks[] = ['label' => Lang::t('req.extension', ['name' => $extension]), 'ok' => $loaded, 'detail' => Lang::t($loaded ? 'req.loaded' : 'req.missing')];
         }
 
         foreach ($this->ini as $key => $minimum) {
             $current = (string) ini_get($key);
             $ok = $current === '-1' || $this->bytes($current) >= $this->bytes($minimum);
-            $checks[] = ['label' => "$key >= $minimum", 'ok' => $ok, 'detail' => 'Current: '.($current === '' ? 'not set' : $current)];
+            $checks[] = ['label' => Lang::t('req.ini', ['key' => $key, 'min' => $minimum]), 'ok' => $ok, 'detail' => Lang::t('req.current', ['value' => $current === '' ? Lang::t('req.not_set') : $current])];
         }
 
         foreach ($this->functions as $function) {
             $ok = function_exists($function);
-            $checks[] = ['label' => "Function: $function()", 'ok' => $ok, 'detail' => $ok ? 'Available' : 'Missing or disabled'];
+            $checks[] = ['label' => Lang::t('req.function', ['name' => $function]), 'ok' => $ok, 'detail' => Lang::t($ok ? 'req.available' : 'req.function_missing')];
         }
 
         return $checks;
@@ -111,7 +112,7 @@ final class Requirements extends AbstractStep
     {
         return $this->viewData($ctx)['passed']
             ? StepResult::ok()
-            : StepResult::fail('Fix the failing requirements, then re-check.');
+            : StepResult::fail(Lang::t('req.failed'));
     }
 
     private function bytes(string $value): int

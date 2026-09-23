@@ -6,6 +6,7 @@ namespace SpykraLabs\Alba\Steps;
 
 use SpykraLabs\Alba\Http\Request;
 use SpykraLabs\Alba\Support\Context;
+use SpykraLabs\Alba\Support\Lang;
 use SpykraLabs\Alba\Tasks\Task;
 use Throwable;
 
@@ -15,24 +16,39 @@ final class TaskStep extends AbstractStep
     /** @var list<Task> */
     private array $tasks = [];
 
-    private string $button = 'Run';
+    private string|array $button = 'Run';
 
     public static function migrate(): self
     {
-        return self::named('migrate', 'Migrate', 'Create the database tables.', 'Run migrations');
+        return self::preset('migrate', 'Migrate', 'Create the database tables.', 'Run migrations');
     }
 
     public static function seed(): self
     {
-        return self::named('seed', 'Seed', 'Fill the tables with initial data.', 'Seed database');
+        return self::preset('seed', 'Seed', 'Fill the tables with initial data.', 'Seed database');
     }
 
     public static function commands(): self
     {
-        return self::named('commands', 'Finalize', 'Run post-install commands.', 'Run commands');
+        return self::preset('commands', 'Finalize', 'Run post-install commands.', 'Run commands');
     }
 
-    public static function named(string $key, string $title, string $description = '', string $button = 'Run'): self
+    /**
+     * A custom task step. Texts may be strings or locale keyed arrays.
+     *
+     * @param  string|array<string, string>  $title
+     */
+    public static function named(string $key, string|array $title, string|array $description = '', string|array $button = 'Run'): self
+    {
+        $step = self::preset($key, $title, $description, $button);
+        $step->titleSet = $step->descriptionSet = true;
+        $step->button = $button;
+
+        return $step;
+    }
+
+    /** Built-in step: its texts come from the language files. */
+    private static function preset(string $key, string|array $title, string|array $description, string|array $button): self
     {
         $step = new self;
         $step->key = $key;
@@ -81,7 +97,11 @@ final class TaskStep extends AbstractStep
     {
         $results = $ctx->state->get('tasks', [])[$this->key] ?? [];
 
-        return ['tasks' => $this->tasks, 'results' => $results, 'button' => $this->button];
+        $button = $this->titleSet
+            ? Lang::text($this->button)
+            : Lang::t("step.{$this->key}.button", [], Lang::text($this->button));
+
+        return ['tasks' => $this->tasks, 'results' => $results, 'button' => $button];
     }
 
     /** Runs one task by index and records the outcome. @return array{ok: bool, log: string} */
@@ -108,7 +128,7 @@ final class TaskStep extends AbstractStep
         foreach ($this->tasks as $i => $task) {
             $done = $ctx->state->get('tasks', [])[$this->key][$i]['ok'] ?? false;
             if (! $done && ! $this->runTask($i, $ctx)['ok']) {
-                return StepResult::fail("Task \"{$task->name()}\" failed.");
+                return StepResult::fail(Lang::t('ui.task_failed', ['name' => $task->name()]));
             }
         }
 

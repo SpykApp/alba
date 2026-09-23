@@ -39,6 +39,8 @@ final class View
 
         $e = static fn (mixed $v): string => htmlspecialchars((string) $v, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $data['e'] = $e;
+        $data['t'] = static fn (string $key, array $replace = []): string => Lang::t($key, $replace);
+        $data['text'] = static fn (string|array|null $value): string => Lang::text($value);
         $data['view'] = $this;
 
         return (static function (string $__file, array $__data): string {
